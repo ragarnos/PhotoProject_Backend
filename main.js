@@ -62,6 +62,7 @@ const data = new Array(countOfOffers).fill(null).map((e,index)=> getOffer(index)
 const comment_people = new Array(countOfComments).fill(null).map((e, index) => getComment(index))
 fs.writeFileSync("result.txt", JSON.stringify(data));
 
+
 http.createServer((req, res) =>{
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, UPDATE");
@@ -72,19 +73,17 @@ http.createServer((req, res) =>{
     if (req.method === "POST"){
         if (url === "/upload") {
             req.on("data", (data) =>{
-                body = JSON.parse(data);
-              
-               
+                body += data.toString(); 
             });
             req.on("end", () => {
-                    // PhotoUpdate = JSON.parse(fs.readFileSync("upload.txt"));
-                    // console.log(PhotoUpdate);
-                    // PhotoUpdate.push(body);
-
-                let dataUpdate = body;   
-
-                fs.writeFileSync("upload.txt", JSON.stringify(dataUpdate));
-                
+                if(fs.readFileSync("upload.txt").toString('utf-8') == ''){
+                    fs.writeFileSync("upload.txt", JSON.stringify([body]));
+                }else{
+                    const bodyNew = JSON.parse(body);
+                    const PhotoUpdate = JSON.parse(fs.readFileSync("upload.txt"));;
+                    PhotoUpdate.push(bodyNew);
+                    fs.writeFileSync("upload.txt", JSON.stringify([PhotoUpdate]));
+                }
             });
             res.write(fs.readFileSync("upload.txt"));
             res.end();
@@ -94,7 +93,7 @@ http.createServer((req, res) =>{
             const photoResult = fs.readFileSync("result.txt", "utf-8");
             res.end(photoResult);
         }else if(photoResult.status !== 200){
-            res.end("Cannot find photos")
+            res.end("Unable to find this photo")
         }
     }
 }).listen(3001);
